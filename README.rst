@@ -1,21 +1,21 @@
 A library for running separated subprocesses with asyncio.
 
-The usage is simple:
+The usage is simple::
 
-import asyncio
-
-from aiopool import subprocess
-
-@subprocess
-def worker():
-    # the code which should be runned in child process
+    import asyncio
     
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
+    from aiopool import subprocess
     
-    # run 2 child processes
-    workers = []
-    for _ in range(2):
-        workers.append(worker())
+    @subprocess
+    def worker():
+        # the code which should be runned in child process
         
-    loop.run_forever()
+    if __name__ == '__main__':
+        loop = asyncio.get_event_loop()
+        
+        # run 2 child processes
+        workers = []
+        for _ in range(2):
+            workers.append(worker())
+            
+        loop.run_forever()
