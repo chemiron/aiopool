@@ -108,6 +108,7 @@ class PipeReader:
 class ChildProcess:
 
     loop = None
+    _on_start_return = None
 
     def __init__(self, up_read, down_write,
                  on_start=None, on_stop=None):
@@ -121,15 +122,22 @@ class ChildProcess:
         asyncio.set_event_loop(loop)
 
         if self.on_start is not None:
-            asyncio.async(self.on_start())
-        asyncio.async(self.heartbeat())
+            def cb_on_start(fut):
+                self._on_start_return = fut.result()
+            start_task = asyncio.async(self.on_start())
+            start_task.add_done_callback(cb_on_start)
 
+        asyncio.async(self.heartbeat())
         loop.add_signal_handler(signal.SIGINT, self.stop)
         loop.add_signal_handler(signal.SIGTERM, self.stop)
 
         asyncio.get_event_loop().run_forever()
+
         if self.on_stop is not None:
-            loop.run_until_complete(self.on_stop())
+            args = []
+            if self._on_start_return:
+                args.append(self._on_start_return)
+            loop.run_until_complete(self.on_stop(*args))
 
         loop.remove_signal_handler(signal.SIGINT)
         loop.remove_signal_handler(signal.SIGTERM)
