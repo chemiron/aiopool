@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="aiopool",
-    version="0.0.1a1",
+    version="0.0.2a1",
     description="Subprocesses for asyncio",
     long_description="A library for running separated subprocesses with asyncio.",
     url="https://github.com/chemiron/aiopool.git",
