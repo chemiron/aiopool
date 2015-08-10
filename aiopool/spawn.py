@@ -3,7 +3,8 @@ import ctypes
 import multiprocessing as mp
 import time
 
-from .base import WorkerProcess, ChildProcess
+from .base import (WorkerProcess, ChildProcess,
+                   IDLE_CHECK, IDLE_TIME)
 
 
 class _State(ctypes.Structure):
@@ -47,8 +48,10 @@ class SpawnChild(ChildProcess):
 
     @asyncio.coroutine
     def heartbeat(self):
+        idle_time = self.options.get('idle_time', IDLE_TIME)
+        idle_check = self.options.get('idle_check', IDLE_CHECK)
         while True:
-            yield from asyncio.sleep(15)
+            yield from asyncio.sleep(idle_check)
 
             if self.state.ping:
                 self.state.ping = False
@@ -59,7 +62,7 @@ class SpawnChild(ChildProcess):
                 self.stop()
                 break
 
-            if (time.monotonic() - self.ping) < 30:
+            if (time.monotonic() - self.ping) < idle_time:
                 self.state.pong = True
             else:
                 self.stop()
@@ -88,13 +91,15 @@ class SpawnWorker(WorkerProcess):
 
     @asyncio.coroutine
     def heartbeat(self, state):
+        idle_time = self.options.get('idle_time', IDLE_TIME)
+        idle_check = self.options.get('idle_check', IDLE_CHECK)
         while True:
-            yield from asyncio.sleep(15)
+            yield from asyncio.sleep(idle_check)
             if state.pong:
                 state.pong = False
                 self.ping = time.monotonic()
 
-            if (time.monotonic() - self.ping) < 30:
+            if (time.monotonic() - self.ping) < idle_time:
                 state.ping = True
             else:
                 self.restart()

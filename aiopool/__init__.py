@@ -2,6 +2,7 @@ import asyncio
 import importlib
 import logging
 
+from .base import IDLE_CHECK, IDLE_TIME
 from .fork import ForkWorker
 from .spawn import SpawnWorker
 
@@ -12,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class _subprocess:
+
+    idle_time = IDLE_TIME
+    idle_check = IDLE_CHECK
 
     start_args = start_kwargs = stop_arg = None
     _on_start = _on_stop = None
@@ -60,13 +64,17 @@ class _subprocess:
 class fork(_subprocess):
 
     def get_worker(self):
-        return ForkWorker(asyncio.get_event_loop(), self)
+        return ForkWorker(asyncio.get_event_loop(), self,
+                          idle_time=self.idle_time,
+                          idle_check=self.idle_check)
 
 
 class spawn(_subprocess):
 
     def get_worker(self):
-        return SpawnWorker(asyncio.get_event_loop(), self)
+        return SpawnWorker(asyncio.get_event_loop(), self,
+                           idle_time=self.idle_time,
+                           idle_check=self.idle_check)
 
     def __getstate__(self):
         state = {'start_args': self.start_args,

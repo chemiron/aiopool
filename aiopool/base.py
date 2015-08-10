@@ -3,12 +3,19 @@ import os
 import signal
 
 
+# if it's idle will be restarted after N seconds
+IDLE_TIME = 30
+# check for idle each N seconds
+IDLE_CHECK = 5
+
+
 class ChildProcess:
 
     loop = None
 
-    def __init__(self, loader):
+    def __init__(self, loader, **options):
         self.loader = loader
+        self.options = options
 
     def start(self):
         self.loop = loop = asyncio.new_event_loop()
@@ -39,9 +46,10 @@ class WorkerProcess:
 
     _started = _restart = False
 
-    def __init__(self, loop, loader):
+    def __init__(self, loop, loader, **options):
         self.loop = loop
         self.loader = loader
+        self.options = options
         self.start()
 
     def start(self):

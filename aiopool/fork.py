@@ -5,7 +5,8 @@ import signal
 from struct import Struct
 import time
 
-from .base import WorkerProcess, ChildProcess
+from .base import (WorkerProcess, ChildProcess,
+                   IDLE_CHECK, IDLE_TIME)
 
 MSG_HEAD = 0x0
 MSG_PING = 0x1
@@ -117,8 +118,8 @@ class ForkChild(ChildProcess):
 
     _heartbeat_task = None
 
-    def __init__(self, parent_read, parent_write, loader):
-        ChildProcess.__init__(self, loader)
+    def __init__(self, parent_read, parent_write, loader, **options):
+        ChildProcess.__init__(self, loader, **options)
         self.parent_read = parent_read
         self.parent_write = parent_write
 
@@ -198,10 +199,12 @@ class ForkWorker(WorkerProcess):
 
     @asyncio.coroutine
     def heartbeat(self, writer):
+        idle_time = self.options.get('idle_time', IDLE_TIME)
+        idle_check = self.options.get('idle_check', IDLE_CHECK)
         while True:
-            yield from asyncio.sleep(15)
+            yield from asyncio.sleep(idle_check)
 
-            if (time.monotonic() - self.ping) < 30:
+            if (time.monotonic() - self.ping) < idle_time:
                 writer.ping()
             else:
                 self.restart()
